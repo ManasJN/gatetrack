@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>GATE 2027 · Prep Tracker</title>
+<style>
+  :root{
+    --bg:#f5f6f3;
+    --surface:#ffffff;
+    --ink:#1b2320;
+    --ink-muted:#5b655f;
+    --ink-faint:#8b948e;
+    --accent:#2f6f62;
+    --accent-soft:#dfeceA;
+    --accent-soft2:#e8f1ee;
+    --line:#e3e4de;
+    --line-strong:#cfd2ca;
+    --danger:#a4483a;
+    --danger-soft:#f4e6e3;
+    --radius:10px;
+    --radius-lg:14px;
+    --shell-max:560px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12161a;
+      --surface:#1a1f24;
+      --ink:#e9ece9;
+      --ink-muted:#9aa5a0;
+      --ink-faint:#6c7671;
+      --accent:#6fbfa8;
+      --accent-soft:rgba(111,191,168,.16);
+      --accent-soft2:rgba(111,191,168,.08);
+      --line:#262c31;
+      --line-strong:#333a40;
+      --danger:#d98b7d;
+      --danger-soft:rgba(217,139,125,.14);
+    }
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  #shell{
+    width:100%;
+    max-width:var(--shell-max);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:var(--bg);
+  }
+  a{color:inherit;}
+
+  /* ---- Topbar ---- */
+  #topbar{
+    position:sticky; top:0; z-index:10;
+    background:var(--bg);
+    border-bottom:1px solid var(--line);
+    padding:16px 18px 12px;
+  }
+  #topbar h1{
+    margin:0;
+    font-size:19px;
+    font-weight:700;
+    letter-spacing:-.01em;
+  }
+  #topbar .sub{
+    margin-top:2px;
+    font-size:13px;
+    color:var(--ink-muted);
+  }
+
+  /* ---- Main ---- */
+  #main{
+    flex:1;
+    padding:16px 18px 96px;
+  }
+  .view{ animation:none; }
+  h2.section-title{
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink-muted);
+    margin:22px 0 10px;
+  }
+  h2.section-title:first-child{margin-top:0;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    padding:16px;
+  }
+  .card + .card{margin-top:10px;}
+
+  /* ---- Progress ---- */
+  .phase-card .phase-top{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .phase-card .phase-name{font-size:15px; font-weight:600;}
+  .phase-card .phase-desc{font-size:12.5px; color:var(--ink-muted); margin-top:1px;}
+  .phase-card .phase-pct{font-size:22px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .bar-track{
+    height:8px; border-radius:6px; background:var(--line);
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%; background:var(--accent); border-radius:6px;
+    transition:width .25s ease;
+  }
+  .phase-card .phase-meta{
+    display:flex; justify-content:space-between;
+    margin-top:8px; font-size:12px; color:var(--ink-muted);
+  }
+
+  .stat-row{display:flex; gap:10px;}
+  .stat-box{
+    flex:1;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    padding:12px 14px;
+  }
+  .stat-box .num{font-size:20px; font-weight:700;}
+  .stat-box .label{font-size:11.5px; color:var(--ink-muted); margin-top:2px;}
+
+  /* ---- Heatmap ---- */
+  .heatmap-wrap{overflow-x:auto; padding-bottom:2px;}
+  .heatmap-grid{
+    display:grid;
+    grid-auto-flow:column;
+    grid-template-rows:repeat(7, 1fr);
+    gap:3px;
+    width:max-content;
+  }
+  .hm-cell{
+    width:13px; height:13px; border-radius:3px;
+    background:var(--line);
+    cursor:pointer;
+  }
+  .hm-cell.lvl1{background:var(--accent-soft);}
+  .hm-cell.lvl2{background:#7fada2;}
+  .hm-cell.lvl2{background:color-mix(in srgb, var(--accent) 55%, var(--line));}
+  .hm-cell.lvl3{background:var(--accent);}
+  .hm-cell.future{background:transparent; cursor:default;}
+  .heatmap-legend{
+    display:flex; align-items:center; gap:5px; margin-top:10px;
+    font-size:11px; color:var(--ink-faint);
+  }
+  .heatmap-legend .hm-cell{cursor:default;}
+
+  /* ---- Phase tabs ---- */
+  .tabbar{
+    display:flex; gap:6px; margin-bottom:14px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:999px; padding:3px;
+  }
+  .tabbar button{
+    flex:1; border:none; background:transparent; color:var(--ink-muted);
+    padding:9px 4px; font-size:13.5px; font-weight:600; border-radius:999px;
+    cursor:pointer;
+  }
+  .tabbar button.active{background:var(--accent); color:#fff;}
+
+  /* ---- Subject cards (phases) ---- */
+  .subject-card{margin-bottom:10px;}
+  .subject-head{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:10px;
+  }
+  .subject-head .name{font-size:14.5px; font-weight:600;}
+  .status-pill{
+    font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px;
+    white-space:nowrap;
+  }
+  .status-pill.complete{background:var(--accent-soft); color:var(--accent);}
+  .status-pill.progress{background:var(--line); color:var(--ink-muted);}
+  .status-pill.notstarted{background:transparent; color:var(--ink-faint); border:1px solid var(--line);}
+
+  .check-grid{display:flex; flex-direction:column; gap:2px;}
+  .check-row{
+    display:flex; align-items:center; gap:12px;
+    padding:9px 4px;
+    cursor:pointer;
+    border-radius:8px;
+  }
+  .check-row:active{background:var(--accent-soft2);}
+  .check-row input[type=checkbox]{
+    width:22px; height:22px; flex:none;
+    accent-color:var(--accent);
+  }
+  .check-row span{font-size:14px;}
+  .check-row.checked span{color:var(--ink-muted); text-decoration:line-through; text-decoration-color:var(--line-strong);}
+
+  /* ---- Questions view ---- */
+  .add-btn{
+    width:100%; padding:13px; border:none; border-radius:var(--radius-lg);
+    background:var(--accent); color:#fff; font-size:15px; font-weight:700;
+    cursor:pointer; margin-bottom:16px;
+  }
+  .subjectwise-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:8px 0; border-bottom:1px solid var(--line); font-size:13.5px;
+  }
+  .subjectwise-row:last-child{border-bottom:none;}
+  .subjectwise-row .val{color:var(--ink-muted); font-weight:600;}
+
+  /* ---- Bottom nav ---- */
+  #bottomnav{
+    position:fixed; bottom:0; left:0; right:0; z-index:20;
+    display:flex; justify-content:center;
+  }
+  #bottomnav .inner{
+    width:100%; max-width:var(--shell-max);
+    display:flex;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  }
+  #bottomnav button{
+    flex:1; background:none; border:none; padding:8px 2px;
+    font-size:12px; font-weight:600; color:var(--ink-faint);
+    cursor:pointer; border-radius:10px;
+  }
+  #bottomnav button.active{color:var(--accent); background:var(--accent-soft2);}
+
+  /* ---- Modal ---- */
+  #modal-root{position:fixed; inset:0; z-index:40; display:none;}
+  #modal-root.open{display:block;}
+  .modal-overlay{
+    position:absolute; inset:0; background:rgba(10,14,12,.45);
+  }
+  .modal-sheet{
+    position:absolute; left:0; right:0; bottom:0;
+    max-width:var(--shell-max); margin:0 auto;
+    background:var(--surface);
+    border-radius:18px 18px 0 0;
+    padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+    max-height:88vh; overflow-y:auto;
+  }
+  .modal-sheet h3{margin:0 0 14px; font-size:16px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12.5px; color:var(--ink-muted); margin-bottom:6px; font-weight:600;}
+  .field input[type=date],
+  .field input[type=number]{
+    width:100%; padding:11px 12px; border:1px solid var(--line-strong);
+    border-radius:9px; font-size:15px; background:var(--bg); color:var(--ink);
+  }
+  .chip-grid{display:flex; flex-wrap:wrap; gap:7px;}
+  .chip{
+    padding:8px 12px; border-radius:999px; border:1px solid var(--line-strong);
+    font-size:13px; background:var(--bg); color:var(--ink-muted); cursor:pointer;
+  }
+  .chip.selected{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .modal-actions{display:flex; gap:10px; margin-top:6px;}
+  .btn{
+    flex:1; padding:12px; border-radius:10px; border:none;
+    font-size:14.5px; font-weight:700; cursor:pointer;
+    text-align:center;
+  }
+  label.btn{ box-sizing:border-box; }
+  .btn.primary{background:var(--accent); color:#fff;}
+  .btn.ghost{background:var(--line); color:var(--ink);}
+  .btn.danger{background:var(--danger-soft); color:var(--danger);}
+  .detail-row{display:flex; justify-content:space-between; padding:7px 0; font-size:14px;}
+  .detail-row .k{color:var(--ink-muted);}
+  .helper-text{font-size:12px; color:var(--ink-faint); margin-top:-6px; margin-bottom:14px;}
+
+  .empty-note{color:var(--ink-faint); font-size:13px; padding:6px 2px 2px;}
+  .approx{color:var(--ink-faint); font-weight:400;}
+
+  input[type=file]{font-size:13px;}
+  .settings-desc{font-size:12.5px; color:var(--ink-muted); margin:6px 0 14px; line-height:1.5;}
+</style>
+</head>
+<body>
+<div id="shell">
+  <div id="topbar">
+    <h1>GATE 2027 · CS</h1>
+    <div class="sub" id="topbar-sub">Preparation overview</div>
+  </div>
+  <div id="main"></div>
+  <div id="bottomnav">
+    <div class="inner">
+      <button data-view="home">Home</button>
+      <button data-view="phases">Phases</button>
+      <button data-view="questions">Questions</button>
+      <button data-view="settings">Settings</button>
+    </div>
+  </div>
+</div>
+<div id="modal-root">
+  <div class="modal-overlay" id="modal-overlay"></div>
+  <div class="modal-sheet" id="modal-sheet"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= CONSTANTS ======================= */
+
+var SUBJECTS = [
+  {id:"engineering-mathematics", name:"Engineering Mathematics"},
+  {id:"discrete-mathematics",    name:"Discrete Mathematics"},
+  {id:"digital-logic",           name:"Digital Logic"},
+  {id:"coa",                     name:"Computer Organization & Architecture"},
+  {id:"programming-ds",          name:"Programming & Data Structures"},
+  {id:"algorithms",              name:"Algorithms"},
+  {id:"toc",                     name:"Theory of Computation"},
+  {id:"compiler-design",         name:"Compiler Design"},
+  {id:"os",                      name:"Operating Systems"},
+  {id:"dbms",                    name:"Databases / DBMS"},
+  {id:"cn",                      name:"Computer Networks"},
+  {id:"aptitude",                name:"General Aptitude"}
+];
+
+var PHASE1_FIELDS = [["lectures","Lectures"],["pyqs","PYQs"],["quizzes","Quizzes"]];
+var PHASE2_FIELDS = [["revision","Revision"],["topicTests","Topic-wise Tests"],["shortNotes","Short Notes"],["subjectTest","Subject Test"]];
+var PHASE3_FIELDS = [["revision","Revision"],["subjectTest","Subject Test"]];
+var PHASE3_GLOBAL_FIELDS = [["multipleSubjectTests","Multiple Subject Tests"],["fullLengthMockSeries","Full-Length Mock Test Series"]];
+
+var STORAGE_KEY = "gate2027tracker.v1";
+
+/* ======================= STATE ======================= */
+
+function defaultState(){
+  var phase1={}, phase2={}, phase3subjects={};
+  SUBJECTS.forEach(function(s){
+    phase1[s.id]={lectures:false,pyqs:false,quizzes:false};
+    phase2[s.id]={revision:false,topicTests:false,shortNotes:false,subjectTest:false};
+    phase3subjects[s.id]={revision:false,subjectTest:false};
+  });
+  return {
+    version:1,
+    phase1:phase1,
+    phase2:phase2,
+    phase3:{subjects:phase3subjects, global:{multipleSubjectTests:false,fullLengthMockSeries:false}},
+    questionLogs:{}
+  };
+}
+
+// Shallow-fill any missing keys from `def` into `obj`, without touching existing values.
+// Keeps old backups forward-compatible if subjects/fields are added later.
+function fillMissing(obj, def){
+  if(typeof def !== "object" || def===null) return obj===undefined ? def : obj;
+  if(typeof obj !== "object" || obj===null) obj = Array.isArray(def) ? [] : {};
+  Object.keys(def).forEach(function(k){
+    obj[k] = fillMissing(obj[k], def[k]);
+  });
+  return obj;
+}
+
+var state = null;
+
+function loadState(){
+  var raw;
+  try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){ raw = null; }
+  var parsed = null;
+  if(raw){
+    try{ parsed = JSON.parse(raw); }catch(e){ parsed = null; }
+  }
+  var def = defaultState();
+  if(!parsed) return def;
+  return fillMissing(parsed, def);
+}
+
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch(e){ /* storage unavailable - silently ignore, data stays in memory for this session */ }
+}
+
+/* ======================= HELPERS ======================= */
+
+function pct(done,total){ return total===0 ? 0 : Math.round((done/total)*100); }
+
+function subjectStatus(doneCount, total){
+  if(doneCount===0) return "notstarted";
+  if(doneCount===total) return "complete";
+  return "progress";
+}
+function statusLabel(status){
+  if(status==="complete") return "Complete";
+  if(status==="progress") return "In progress";
+  return "Not started";
+}
+
+function subjectName(id){
+  for(var i=0;i<SUBJECTS.length;i++) if(SUBJECTS[i].id===id) return SUBJECTS[i].name;
+  return id;
+}
+
+function pad2(n){ return n<10 ? "0"+n : ""+n; }
+function fmtDateKey(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+function todayKey(){ return fmtDateKey(new Date()); }
+function parseDateKey(key){
+  var parts = key.split("-");
+  return new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+}
+function fmtDateLong(d){
+  var months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return d.getDate()+" "+months[d.getMonth()]+" "+d.getFullYear();
+}
+
+function countPhase1(){
+  var done=0, total=0, perSubject={};
+  SUBJECTS.forEach(function(s){
+    var item = state.phase1[s.id];
+    var c=0;
+    PHASE1_FIELDS.forEach(function(f){ total++; if(item[f[0]]){done++; c++;} });
+    perSubject[s.id]=c;
+  });
+  return {done:done, total:total, perSubject:perSubject};
+}
+function countPhase2(){
+  var done=0, total=0, perSubject={};
+  SUBJECTS.forEach(function(s){
+    var item = state.phase2[s.id];
+    var c=0;
+    PHASE2_FIELDS.forEach(function(f){ total++; if(item[f[0]]){done++; c++;} });
+    perSubject[s.id]=c;
+  });
+  return {done:done, total:total, perSubject:perSubject};
+}
+function countPhase3(){
+  var done=0, total=0, perSubject={};
+  SUBJECTS.forEach(function(s){
+    var item = state.phase3.subjects[s.id];
+    var c=0;
+    PHASE3_FIELDS.forEach(function(f){ total++; if(item[f[0]]){done++; c++;} });
+    perSubject[s.id]=c;
+  });
+  PHASE3_GLOBAL_FIELDS.forEach(function(f){ total++; if(state.phase3.global[f[0]]) done++; });
+  return {done:done, total:total, perSubject:perSubject};
+}
+
+function completedSubjectCount(perSubject, itemsPerSubject){
+  var n=0;
+  SUBJECTS.forEach(function(s){ if(perSubject[s.id]===itemsPerSubject) n++; });
+  return n;
+}
+
+function computeStreak(){
+  var logs = state.questionLogs;
+  var d = new Date();
+  var key = fmtDateKey(d);
+  if(!(logs[key] && logs[key].count>0)){
+    d.setDate(d.getDate()-1);
+  }
+  var streak=0;
+  while(true){
+    key = fmtDateKey(d);
+    if(logs[key] && logs[key].count>0){ streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function totalQuestions(){
+  var sum=0;
+  Object.keys(state.questionLogs).forEach(function(k){ sum += (state.questionLogs[k].count||0); });
+  return sum;
+}
+function thisMonthQuestions(){
+  var now=new Date();
+  var sum=0;
+  Object.keys(state.questionLogs).forEach(function(k){
+    var d = parseDateKey(k);
+    if(d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth()) sum += (state.questionLogs[k].count||0);
+  });
+  return sum;
+}
+function daysPracticedBySubject(){
+  // We only know the day's total, not how it split across subjects, so the only
+  // honest per-subject figure is how many days each subject was logged on.
+  var counts={};
+  SUBJECTS.forEach(function(s){ counts[s.id]=0; });
+  Object.keys(state.questionLogs).forEach(function(k){
+    var log = state.questionLogs[k];
+    if(!log || !log.count) return;
+    var subs = log.subjects || [];
+    subs.forEach(function(sid){
+      if(counts[sid]===undefined) counts[sid]=0;
+      counts[sid] += 1;
+    });
+  });
+  var arr = Object.keys(counts).map(function(sid){ return {id:sid, name:subjectName(sid), days:counts[sid]}; });
+  arr.sort(function(a,b){ return b.days-a.days; });
+  return arr.filter(function(a){ return a.days>0; });
+}
+
+function levelForCount(c){
+  if(!c || c<=0) return 0;
+  if(c<20) return 1;
+  if(c<50) return 2;
+  return 3;
+}
+
+/* ======================= HEATMAP ======================= */
+
+function renderHeatmap(weeks){
+  var days = weeks*7;
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  // Align end of grid to the coming Saturday so columns read as full weeks.
+  var endDow = today.getDay(); // 0=Sun..6=Sat
+  var end = new Date(today);
+  end.setDate(end.getDate() + (6-endDow));
+  var start = new Date(end);
+  start.setDate(start.getDate() - (days-1));
+
+  var cells = [];
+  var cursor = new Date(start);
+  for(var i=0;i<days;i++){
+    var key = fmtDateKey(cursor);
+    var isFuture = cursor.getTime() > today.getTime();
+    var log = state.questionLogs[key];
+    var count = log ? (log.count||0) : 0;
+    cells.push({key:key, count:count, future:isFuture});
+    cursor.setDate(cursor.getDate()+1);
+  }
+
+  var html = '<div class="heatmap-wrap"><div class="heatmap-grid">';
+  cells.forEach(function(c){
+    if(c.future){
+      html += '<div class="hm-cell future"></div>';
+    } else {
+      var lvl = levelForCount(c.count);
+      html += '<div class="hm-cell'+(lvl?' lvl'+lvl:'')+'" data-date="'+c.key+'" title="'+c.key+'"></div>';
+    }
+  });
+  html += '</div></div>';
+  html += '<div class="heatmap-legend"><span>Less</span>'+
+    '<div class="hm-cell"></div><div class="hm-cell lvl1"></div><div class="hm-cell lvl2"></div><div class="hm-cell lvl3"></div>'+
+    '<span>More</span></div>';
+  return html;
+}
+
+/* ======================= VIEW: HOME ======================= */
+
+function renderHome(){
+  var p1 = countPhase1(), p2 = countPhase2(), p3 = countPhase3();
+  var p1pct = pct(p1.done,p1.total), p2pct = pct(p2.done,p2.total), p3pct = pct(p3.done,p3.total);
+  var p1complete = completedSubjectCount(p1.perSubject,3);
+  var p2complete = completedSubjectCount(p2.perSubject,4);
+  var p3complete = completedSubjectCount(p3.perSubject,2);
+  var streak = computeStreak();
+  var total = totalQuestions();
+
+  function phaseCard(name,desc,p,doneCount,total_,completeSubj){
+    return '<div class="card phase-card">'+
+      '<div class="phase-top">'+
+        '<div><div class="phase-name">'+name+'</div><div class="phase-desc">'+desc+'</div></div>'+
+        '<div class="phase-pct">'+p+'%</div>'+
+      '</div>'+
+      '<div class="bar-track"><div class="bar-fill" style="width:'+p+'%"></div></div>'+
+      '<div class="phase-meta"><span>'+doneCount+' / '+total_+' items</span><span>'+completeSubj+' / 12 subjects complete</span></div>'+
+    '</div>';
+  }
+
+  var html = '';
+  html += '<h2 class="section-title">Preparation phases</h2>';
+  html += phaseCard("Phase 1","Syllabus completion", p1pct, p1.done, p1.total, p1complete);
+  html += phaseCard("Phase 2","First revision", p2pct, p2.done, p2.total, p2complete);
+  html += phaseCard("Phase 3","Continuous revision", p3pct, p3.done, p3.total, p3complete);
+
+  html += '<h2 class="section-title">Question practice</h2>';
+  html += '<div class="stat-row">'+
+    '<div class="stat-box"><div class="num">~'+total+'</div><div class="label">Total questions tracked</div></div>'+
+    '<div class="stat-box"><div class="num">'+(streak>0 ? "🔥 "+streak : "—")+'</div><div class="label">'+(streak>0 ? "day streak" : "No active streak")+'</div></div>'+
+  '</div>';
+
+  html += '<div class="card" style="margin-top:10px;">'+
+    '<div class="phase-desc" style="margin-bottom:10px;">Last 7 weeks</div>'+
+    renderHeatmap(7)+
+  '</div>';
+
+  document.getElementById("main").innerHTML = html;
+}
+
+/* ======================= VIEW: PHASES ======================= */
+
+var currentPhaseTab = 1;
+
+function renderPhases(){
+  var main = document.getElementById("main");
+  var counts = currentPhaseTab===1 ? countPhase1() : currentPhaseTab===2 ? countPhase2() : countPhase3();
+  var overallPct = pct(counts.done, counts.total);
+  var fields = currentPhaseTab===1 ? PHASE1_FIELDS : currentPhaseTab===2 ? PHASE2_FIELDS : PHASE3_FIELDS;
+  var phaseTitle = currentPhaseTab===1 ? "Syllabus completion" : currentPhaseTab===2 ? "First revision" : "Continuous revision";
+
+  var html = '<div class="tabbar">'+
+    [1,2,3].map(function(n){ return '<button data-phase-tab="'+n+'" class="'+(n===currentPhaseTab?'active':'')+'">Phase '+n+'</button>'; }).join('')+
+    '</div>';
+
+  html += '<div class="card phase-card" style="margin-bottom:16px;">'+
+    '<div class="phase-top"><div><div class="phase-name">Phase '+currentPhaseTab+'</div><div class="phase-desc">'+phaseTitle+'</div></div><div class="phase-pct">'+overallPct+'%</div></div>'+
+    '<div class="bar-track"><div class="bar-fill" style="width:'+overallPct+'%"></div></div>'+
+  '</div>';
+
+  SUBJECTS.forEach(function(s){
+    var itemState = currentPhaseTab===1 ? state.phase1[s.id] : currentPhaseTab===2 ? state.phase2[s.id] : state.phase3.subjects[s.id];
+    var c = counts.perSubject[s.id];
+    var status = subjectStatus(c, fields.length);
+    html += '<div class="card subject-card">'+
+      '<div class="subject-head"><span class="name">'+s.name+'</span><span class="status-pill '+
+        (status==="complete"?"complete":status==="progress"?"progress":"notstarted")+'">'+statusLabel(status)+'</span></div>'+
+      '<div class="check-grid">';
+    fields.forEach(function(f){
+      var checked = !!itemState[f[0]];
+      html += '<label class="check-row'+(checked?' checked':'')+'">'+
+        '<input type="checkbox" data-phase="'+currentPhaseTab+'" data-subject="'+s.id+'" data-field="'+f[0]+'" '+(checked?'checked':'')+'>'+
+        '<span>'+f[1]+'</span></label>';
+    });
+    html += '</div></div>';
+  });
+
+  if(currentPhaseTab===3){
+    html += '<h2 class="section-title">Overall activities</h2>';
+    html += '<div class="card subject-card"><div class="check-grid">';
+    PHASE3_GLOBAL_FIELDS.forEach(function(f){
+      var checked = !!state.phase3.global[f[0]];
+      html += '<label class="check-row'+(checked?' checked':'')+'">'+
+        '<input type="checkbox" data-phase="3g" data-field="'+f[0]+'" '+(checked?'checked':'')+'>'+
+        '<span>'+f[1]+'</span></label>';
+    });
+    html += '</div></div>';
+  }
+
+  main.innerHTML = html;
+}
+
+/* ======================= VIEW: QUESTIONS ======================= */
+
+function renderQuestions(){
+  var total = totalQuestions();
+  var month = thisMonthQuestions();
+  var bySubject = daysPracticedBySubject();
+
+  var html = '<button class="add-btn" id="add-entry-btn">+ Add today\u2019s questions</button>';
+
+  html += '<div class="card">'+
+    '<div class="phase-desc" style="margin-bottom:10px;">Last 18 weeks &middot; tap a day for details</div>'+
+    renderHeatmap(18)+
+  '</div>';
+
+  html += '<h2 class="section-title">Statistics</h2>';
+  html += '<div class="stat-row">'+
+    '<div class="stat-box"><div class="num">~'+total+'</div><div class="label">Total tracked</div></div>'+
+    '<div class="stat-box"><div class="num">~'+month+'</div><div class="label">This month</div></div>'+
+  '</div>';
+
+  html += '<div class="phase-desc" style="margin:14px 0 6px;">Days practiced by subject</div>';
+  html += '<div class="card">';
+  if(bySubject.length===0){
+    html += '<div class="empty-note">No question logs yet. Add today\u2019s count above to get started.</div>';
+  } else {
+    bySubject.forEach(function(s){
+      html += '<div class="subjectwise-row"><span>'+s.name+'</span><span class="val">'+s.days+' day'+(s.days===1?'':'s')+'</span></div>';
+    });
+  }
+  html += '</div>';
+
+  document.getElementById("main").innerHTML = html;
+}
+
+/* ---- Add/Edit entry modal ---- */
+
+function openEntryModal(existingKey){
+  var log = existingKey ? state.questionLogs[existingKey] : null;
+  var dateVal = existingKey || todayKey();
+  var countVal = log ? log.count : "";
+  var selected = log ? (log.subjects||[]).slice() : [];
+  var isEditing = !!log;
+
+  var chipsHtml = SUBJECTS.map(function(s){
+    var sel = selected.indexOf(s.id)!==-1;
+    return '<div class="chip'+(sel?' selected':'')+'" data-chip="'+s.id+'">'+s.name+'</div>';
+  }).join('');
+
+  var html = '<h3>'+(isEditing ? 'Edit entry' : 'Add questions')+'</h3>'+
+    '<div class="field"><label>Date</label><input type="date" id="entry-date" value="'+dateVal+'" max="'+todayKey()+'"></div>'+
+    '<div class="field"><label>Approximate questions solved</label><input type="number" id="entry-count" min="0" step="1" inputmode="numeric" placeholder="e.g. 50" value="'+countVal+'"></div>'+
+    '<div class="helper-text">A rough estimate is fine \u2014 exact counting isn\u2019t needed.</div>'+
+    '<div class="field"><label>Subjects</label><div class="chip-grid">'+chipsHtml+'</div></div>'+
+    '<div class="modal-actions">'+
+      (isEditing ? '<button class="btn danger" id="entry-delete">Delete</button>' : '')+
+      '<button class="btn ghost" id="entry-cancel">Cancel</button>'+
+      '<button class="btn primary" id="entry-save">Save</button>'+
+    '</div>';
+
+  openModal(html);
+
+  var selectedSet = {};
+  selected.forEach(function(id){ selectedSet[id]=true; });
+
+  document.getElementById("modal-sheet").addEventListener("click", function(e){
+    var chip = e.target.closest("[data-chip]");
+    if(chip){
+      var id = chip.getAttribute("data-chip");
+      if(selectedSet[id]){ delete selectedSet[id]; chip.classList.remove("selected"); }
+      else { selectedSet[id]=true; chip.classList.add("selected"); }
+      return;
+    }
+    if(e.target.id==="entry-cancel"){ closeModal(); return; }
+    if(e.target.id==="entry-delete"){
+      delete state.questionLogs[existingKey];
+      saveState();
+      closeModal();
+      renderQuestions();
+      return;
+    }
+    if(e.target.id==="entry-save"){
+      var dateInput = document.getElementById("entry-date").value || todayKey();
+      var countInput = parseInt(document.getElementById("entry-count").value, 10);
+      if(isNaN(countInput) || countInput<0) countInput = 0;
+      var subjects = Object.keys(selectedSet);
+      if(existingKey && existingKey!==dateInput) delete state.questionLogs[existingKey];
+      state.questionLogs[dateInput] = {count:countInput, subjects:subjects};
+      saveState();
+      closeModal();
+      renderQuestions();
+      return;
+    }
+  });
+}
+
+function openDayDetail(key){
+  var log = state.questionLogs[key];
+  var d = parseDateKey(key);
+  var subs = (log && log.subjects) ? log.subjects.map(subjectName).join(", ") : "\u2014";
+  var html = '<h3>'+fmtDateLong(d)+'</h3>';
+  if(!log){
+    html += '<div class="empty-note">No entry for this day.</div>'+
+      '<div class="modal-actions"><button class="btn ghost" id="dd-close">Close</button>'+
+      '<button class="btn primary" id="dd-add">Add entry</button></div>';
+  } else {
+    html += '<div class="detail-row"><span class="k">Approximate questions</span><span class="approx">~'+log.count+'</span></div>'+
+      '<div class="detail-row"><span class="k">Subjects</span><span>'+subs+'</span></div>'+
+      '<div class="modal-actions"><button class="btn ghost" id="dd-close">Close</button>'+
+      '<button class="btn primary" id="dd-edit">Edit</button></div>';
+  }
+  openModal(html);
+  document.getElementById("modal-sheet").addEventListener("click", function(e){
+    if(e.target.id==="dd-close") closeModal();
+    if(e.target.id==="dd-edit"){ closeModal(); openEntryModal(key); }
+    if(e.target.id==="dd-add"){ closeModal(); openEntryModal(key); }
+  });
+}
+
+/* ======================= VIEW: SETTINGS ======================= */
+
+function renderSettings(){
+  var html = '<h2 class="section-title">Backup</h2>'+
+    '<div class="card">'+
+      '<div class="settings-desc">Your data lives only in this browser. Export a backup occasionally so you don\u2019t lose it if site data is cleared.</div>'+
+      '<button class="btn primary" id="export-btn" style="width:100%; margin-bottom:10px;">Export data</button>'+
+      '<label class="btn ghost" style="width:100%; display:block; text-align:center; box-sizing:border-box;">Import data'+
+        '<input type="file" id="import-input" accept="application/json" style="display:none;">'+
+      '</label>'+
+    '</div>'+
+    '<h2 class="section-title">Reset</h2>'+
+    '<div class="card">'+
+      '<div class="settings-desc">Clears all phase checklists and question logs on this device. This cannot be undone unless you have an exported backup.</div>'+
+      '<button class="btn danger" id="reset-btn" style="width:100%;">Reset all data</button>'+
+    '</div>';
+  document.getElementById("main").innerHTML = html;
+
+  document.getElementById("export-btn").addEventListener("click", function(){
+    var blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "gate-2027-backup.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("import-input").addEventListener("change", function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        var parsed = JSON.parse(evt.target.result);
+        var def = defaultState();
+        state = fillMissing(parsed, def);
+        saveState();
+        openModal('<h3>Import complete</h3><div class="empty-note">Your backup has been restored.</div>'+
+          '<div class="modal-actions"><button class="btn primary" id="import-ok" style="flex:1;">OK</button></div>');
+        document.getElementById("modal-sheet").addEventListener("click", function(ev){
+          if(ev.target.id==="import-ok"){ closeModal(); renderSettings(); }
+        });
+      }catch(err){
+        openModal('<h3>Import failed</h3><div class="empty-note">That file doesn\u2019t look like a valid backup.</div>'+
+          '<div class="modal-actions"><button class="btn primary" id="import-fail-ok" style="flex:1;">OK</button></div>');
+        document.getElementById("modal-sheet").addEventListener("click", function(ev){
+          if(ev.target.id==="import-fail-ok") closeModal();
+        });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+
+  document.getElementById("reset-btn").addEventListener("click", function(){
+    openModal('<h3>Reset all data?</h3>'+
+      '<div class="empty-note">This clears every checklist and question log on this device. Export a backup first if you might want this data later.</div>'+
+      '<div class="modal-actions"><button class="btn ghost" id="reset-cancel">Cancel</button>'+
+      '<button class="btn danger" id="reset-confirm">Reset</button></div>');
+    document.getElementById("modal-sheet").addEventListener("click", function(ev){
+      if(ev.target.id==="reset-cancel") closeModal();
+      if(ev.target.id==="reset-confirm"){
+        state = defaultState();
+        saveState();
+        closeModal();
+        renderSettings();
+      }
+    });
+  });
+}
+
+/* ======================= MODAL ======================= */
+
+function openModal(innerHtml){
+  document.getElementById("modal-sheet").innerHTML = innerHtml;
+  document.getElementById("modal-root").classList.add("open");
+}
+function closeModal(){
+  document.getElementById("modal-root").classList.remove("open");
+  document.getElementById("modal-sheet").innerHTML = "";
+}
+
+/* ======================= NAVIGATION ======================= */
+
+var currentView = "home";
+var subtitles = {home:"Preparation overview", phases:"Checklists by phase", questions:"Question log & heatmap", settings:"Backup & reset"};
+
+function renderCurrentView(){
+  document.getElementById("topbar-sub").textContent = subtitles[currentView];
+  Array.prototype.forEach.call(document.querySelectorAll("#bottomnav button"), function(btn){
+    btn.classList.toggle("active", btn.getAttribute("data-view")===currentView);
+  });
+  if(currentView==="home") renderHome();
+  else if(currentView==="phases") renderPhases();
+  else if(currentView==="questions") renderQuestions();
+  else if(currentView==="settings") renderSettings();
+}
+
+function goTo(view){
+  currentView = view;
+  renderCurrentView();
+  window.scrollTo(0,0);
+}
+
+/* ======================= EVENT WIRING ======================= */
+
+document.getElementById("bottomnav").addEventListener("click", function(e){
+  var btn = e.target.closest("[data-view]");
+  if(btn) goTo(btn.getAttribute("data-view"));
+});
+
+document.getElementById("modal-overlay").addEventListener("click", closeModal);
+
+document.getElementById("main").addEventListener("change", function(e){
+  var input = e.target;
+  if(input.matches('input[type=checkbox][data-field]')){
+    var phase = input.getAttribute("data-phase");
+    var field = input.getAttribute("data-field");
+    if(phase==="1"){
+      var subj = input.getAttribute("data-subject");
+      state.phase1[subj][field] = input.checked;
+    } else if(phase==="2"){
+      var subj2 = input.getAttribute("data-subject");
+      state.phase2[subj2][field] = input.checked;
+    } else if(phase==="3"){
+      var subj3 = input.getAttribute("data-subject");
+      state.phase3.subjects[subj3][field] = input.checked;
+    } else if(phase==="3g"){
+      state.phase3.global[field] = input.checked;
+    }
+    saveState();
+    renderCurrentView();
+  }
+});
+
+document.getElementById("main").addEventListener("click", function(e){
+  var tabBtn = e.target.closest("[data-phase-tab]");
+  if(tabBtn){
+    currentPhaseTab = parseInt(tabBtn.getAttribute("data-phase-tab"),10);
+    renderPhases();
+    return;
+  }
+  if(e.target.id==="add-entry-btn"){
+    openEntryModal(null);
+    return;
+  }
+  var cell = e.target.closest(".hm-cell[data-date]");
+  if(cell){
+    openDayDetail(cell.getAttribute("data-date"));
+    return;
+  }
+});
+
+/* ======================= INIT ======================= */
+
+state = loadState();
+renderCurrentView();
+
+})();
+</script>
+</body>
+</html>
